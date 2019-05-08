@@ -2,16 +2,13 @@ package tax.qxn.scheduler.config;
 
 import javax.sql.DataSource;
 
-import java.util.Properties;
-
-import javax.persistence.EntityManagerFactory;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jndi.JndiObjectFactoryBean;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -29,29 +26,20 @@ public class SpringJPAConfig{
     }
     @Bean
     public JpaVendorAdapter jpaVendorAdapter(){
-        return new HibernateJpaVendorAdapter();
+        HibernateJpaVendorAdapter adapter=new HibernateJpaVendorAdapter();
+        adapter.setDatabase(Database.MYSQL);
+        adapter.setShowSql(true);
+        adapter.setGenerateDdl(false);
+        adapter.setDatabasePlatform("org.hibernate.dialect.MySQL8Dialect");
+        return adapter;
     }
+    
     @Bean
-    public Properties hibernateProperties(){
-        Properties hibernateProp=new Properties();
-        hibernateProp.put("hibernate.dialect","org.hibernate.dialect.MySQL8Dialect");
-        hibernateProp.put("hibernate.format_sql",true);
-        hibernateProp.put("hibernate.use_sql_comments",true);
-        hibernateProp.put("hibernate.show_sql",true);
-        hibernateProp.put("hibernate.max_fetch_depth",3);
-        hibernateProp.put("hibernate.jdbc.batch_size",10);
-        hibernateProp.put("hibernate.jdbc.fetch_size",50);
-        return hibernateProp;
-        
-    }
-    @Bean
-    public EntityManagerFactory entityManagerFactory(){
-        LocalContainerEntityManagerFactoryBean factoryBean=new LocalContainerEntityManagerFactoryBean();
-        factoryBean.setPackagesToScan("tax.qxn.scheduler");
-        factoryBean.setDataSource(dataSource());
-        factoryBean.setJpaProperties(hibernateProperties());
-        factoryBean.setJpaVendorAdapter(jpaVendorAdapter());
-        factoryBean.afterPropertiesSet();
-        return factoryBean.getNativeEntityManagerFactory();
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource,JpaVendorAdapter jpaVendorAdapter){
+        LocalContainerEntityManagerFactoryBean emfb=new LocalContainerEntityManagerFactoryBean();
+        emfb.setDataSource(dataSource);
+        emfb.setJpaVendorAdapter(jpaVendorAdapter);
+        emfb.setPackagesToScan("tax.qxn.scheduler.entity");
+        return emfb;
     }
 }
